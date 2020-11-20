@@ -1,0 +1,26 @@
+{
+  "containers": {
+    "nginx": {
+      "image": "phamviet/printenv:latest",
+      "command": [],
+      "environment": {
+        "FOO": "BAR"
+      },
+      "ports": {
+        "80": "HTTP"
+      }
+    }
+  },
+  "publicEndpoint": {
+    "containerName": "nginx",
+    "containerPort": 80,
+    "healthCheck": {
+      "healthyThreshold": 2,
+      "unhealthyThreshold": 2,
+      "timeoutSeconds": 2,
+      "intervalSeconds": 5,
+      "path": "/",
+      "successCodes": "200-499"
+    }
+  }
+}
