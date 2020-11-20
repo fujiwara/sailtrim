@@ -1,7 +1,7 @@
 {
   "containers": {
     "nginx": {
-      "image": "phamviet/printenv:latest",
+      "image": "nginx:latest",
       "command": [],
       "environment": {
         "FOO": "BAR"
