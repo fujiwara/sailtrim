@@ -26,6 +26,9 @@ Commands:
 
   update
     update container service
+
+  dump --name=NAME
+     dump container service attributest to files
 ```
 
 ## Configuration
@@ -79,4 +82,6 @@ deployment: deployment.json
 
 ## LICENSE
 
-MIT
+MIT License
+
+Copyright (c) 2020 FUJIWARA Shunichiro
