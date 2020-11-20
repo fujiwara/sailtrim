@@ -1,6 +1,9 @@
 package sailtrim
 
 import (
+	"io/ioutil"
+	"os"
+
 	"github.com/aws/aws-sdk-go/service/lightsail"
 	"github.com/kayac/go-config"
 )
@@ -32,4 +35,27 @@ func (c *Config) loadDeployment() (*lightsail.ContainerServiceDeployment, error)
 		return nil, err
 	}
 	return &dp, nil
+}
+
+func (c *Config) dumpService(sv *lightsail.ContainerService) error {
+	b, err := MarshalJSON(&lightsail.ContainerService{
+		ContainerServiceName: sv.ContainerServiceName,
+		Power:                sv.Power,
+		Scale:                sv.Scale,
+	})
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(c.Service, b, os.FileMode(0644))
+}
+
+func (c *Config) dumpDeployment(dp *lightsail.ContainerServiceDeployment) error {
+	b, err := MarshalJSON(&lightsail.ContainerServiceDeployment{
+		Containers:     dp.Containers,
+		PublicEndpoint: dp.PublicEndpoint,
+	})
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(c.Deployment, b, os.FileMode(0644))
 }

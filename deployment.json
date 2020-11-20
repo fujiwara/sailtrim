@@ -1,11 +1,11 @@
 {
   "containers": {
     "nginx": {
-      "image": "nginx:latest",
       "command": [],
       "environment": {
         "FOO": "BAR"
       },
+      "image": "nginx:latest",
       "ports": {
         "80": "HTTP"
       }
@@ -16,11 +16,11 @@
     "containerPort": 80,
     "healthCheck": {
       "healthyThreshold": 2,
-      "unhealthyThreshold": 2,
-      "timeoutSeconds": 2,
       "intervalSeconds": 5,
       "path": "/",
-      "successCodes": "200-499"
+      "successCodes": "200-499",
+      "timeoutSeconds": 2,
+      "unhealthyThreshold": 2
     }
   }
 }
