@@ -28,6 +28,9 @@ func _main() int {
 
 	kingpin.Command("deploy", "create new deployment")
 	kingpin.Command("update", "update container service")
+	status := kingpin.Command("status", "show container service status")
+	statusDetail := status.Flag("detail", "show full status as JSON format").Default("false").Bool()
+
 	init := kingpin.Command("init", "initialize a container service")
 	initServiceName := init.Flag("service-name", "service name").Required().String()
 
@@ -58,6 +61,9 @@ func _main() int {
 		err = app.Update(ctx)
 	case "init":
 		err = app.Init(ctx, *initServiceName)
+	case "status":
+		filter.MinLevel = logutils.LogLevel("warn")
+		err = app.Status(ctx, sailtrim.StatusOption{Detail: *statusDetail})
 	}
 
 	if err != nil {

@@ -265,3 +265,41 @@ func (s *SailTrim) create(ctx context.Context, serviceName string) error {
 	}
 	return nil
 }
+
+type StatusOption struct {
+	Detail bool
+}
+
+func (s *SailTrim) Status(ctx context.Context, opt StatusOption) error {
+	_sv, err := s.conf.loadService()
+	if err != nil {
+		return errors.Wrap(err, "failed to load service config")
+	}
+	out, err := s.svc.GetContainerServicesWithContext(ctx, &lightsail.GetContainerServicesInput{
+		ServiceName: _sv.ContainerServiceName,
+	})
+	if err != nil {
+		return err
+	}
+	sv := out.ContainerServices[0]
+	if opt.Detail {
+		fmt.Print(MarshalJSONString(sv))
+		return nil
+	}
+
+	p := func(k, v string) {
+		fmt.Printf("%-17s %s\n", k, v)
+	}
+	p("ServiceName:", *sv.ContainerServiceName)
+	p("State:", *sv.State)
+	p("Power:", *sv.Power)
+	p("Scale:", strconv.FormatInt(*sv.Scale, 10))
+	p("URL:", *sv.Url)
+	for _, ns := range sv.PublicDomainNames {
+		for _, n := range ns {
+			p("PublicDomainName:", *n)
+		}
+	}
+	p("IsDisabled:", strconv.FormatBool(*sv.IsDisabled))
+	return nil
+}
