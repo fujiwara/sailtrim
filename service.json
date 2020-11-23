@@ -1,5 +1,5 @@
 {
-  "containerServiceName": "container-service-1",
+  "containerServiceName": "nginx",
   "power": "micro",
   "scale": 1
 }

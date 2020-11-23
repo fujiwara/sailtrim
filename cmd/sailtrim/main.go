@@ -28,8 +28,8 @@ func _main() int {
 
 	kingpin.Command("deploy", "create new deployment")
 	kingpin.Command("update", "update container service")
-	dump := kingpin.Command("dump", "dump container service")
-	dumpService := dump.Flag("name", "service name").Required().String()
+	init := kingpin.Command("init", "initialize a container service")
+	initServiceName := init.Flag("service-name", "service name").Required().String()
 
 	command := kingpin.Parse()
 	if command == "version" {
@@ -56,8 +56,8 @@ func _main() int {
 		err = app.Deploy(ctx)
 	case "update":
 		err = app.Update(ctx)
-	case "dump":
-		err = app.Dump(ctx, *dumpService)
+	case "init":
+		err = app.Init(ctx, *initServiceName)
 	}
 
 	if err != nil {
