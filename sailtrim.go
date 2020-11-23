@@ -7,6 +7,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/Songmu/prompter"
 	"github.com/aws/aws-sdk-go/aws"
@@ -266,10 +267,12 @@ func (s *SailTrim) create(ctx context.Context, serviceName string) error {
 	return nil
 }
 
+// StatusOption represents options for Status()
 type StatusOption struct {
 	Detail bool
 }
 
+// Status shows stauts of a container service.
 func (s *SailTrim) Status(ctx context.Context, opt StatusOption) error {
 	_sv, err := s.conf.loadService()
 	if err != nil {
@@ -301,5 +304,92 @@ func (s *SailTrim) Status(ctx context.Context, opt StatusOption) error {
 		}
 	}
 	p("IsDisabled:", strconv.FormatBool(*sv.IsDisabled))
+	return nil
+}
+
+type LogsOption struct {
+	ContainerName *string
+	StartTimeStr  *string
+	EndTimeStr    *string
+	FilterPattern *string
+}
+
+func parseTime(s *string) (*time.Time, error) {
+	if s == nil || *s == "" {
+		return nil, nil
+	}
+	now := time.Now()
+	if d, err := time.ParseDuration(*s); err == nil {
+		t := now.Add(-1 * d)
+		return &t, nil
+	}
+	t, err := time.Parse(time.RFC3339, *s)
+	if err != nil {
+		return nil, err
+	}
+	return &t, nil
+}
+
+func (s *SailTrim) Logs(ctx context.Context, opt LogsOption) error {
+	_sv, err := s.conf.loadService()
+	if err != nil {
+		return errors.Wrap(err, "failed to load service config")
+	}
+	out, err := s.svc.GetContainerServicesWithContext(ctx, &lightsail.GetContainerServicesInput{
+		ServiceName: _sv.ContainerServiceName,
+	})
+	if err != nil {
+		return err
+	}
+	sv := out.ContainerServices[0]
+	log.Println("[debug]", sv.GoString())
+	containerNames := make([]string, 0)
+	if n := opt.ContainerName; n != nil && *n != "" {
+		containerNames = append(containerNames, *opt.ContainerName)
+	} else {
+		for name := range sv.CurrentDeployment.Containers {
+			name := name
+			containerNames = append(containerNames, name)
+		}
+	}
+	sort.Strings(containerNames)
+	startTime, err := parseTime(opt.StartTimeStr)
+	if err != nil {
+		return errors.Wrap(err, "invalid --start-time")
+	}
+	endTime, err := parseTime(opt.EndTimeStr)
+	if err != nil {
+		return errors.Wrap(err, "invalid --end-time")
+	}
+
+	for _, containerName := range containerNames {
+		in := &lightsail.GetContainerLogInput{
+			ServiceName:   sv.ContainerServiceName,
+			ContainerName: aws.String(containerName),
+			StartTime:     startTime,
+			EndTime:       endTime,
+			FilterPattern: opt.FilterPattern,
+		}
+		for {
+			log.Println("[debug]", in.GoString())
+			out, err := s.svc.GetContainerLogWithContext(ctx, in)
+			if err != nil {
+				return err
+			}
+			for _, ev := range out.LogEvents {
+				fmt.Printf(
+					"%s\t[%s]\t%s\n",
+					ev.CreatedAt.In(time.Local).Format(time.RFC3339),
+					containerName,
+					*ev.Message,
+				)
+			}
+			if out.NextPageToken == nil {
+				break
+			}
+			in.PageToken = out.NextPageToken
+		}
+	}
+
 	return nil
 }

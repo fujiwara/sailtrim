@@ -34,6 +34,13 @@ func _main() int {
 	init := kingpin.Command("init", "initialize a container service")
 	initServiceName := init.Flag("service-name", "service name").Required().String()
 
+	logs := kingpin.Command("logs", "show logs")
+	logsOpt := sailtrim.LogsOption{}
+	logsOpt.ContainerName = logs.Flag("container-name", "container name").String()
+	logsOpt.FilterPattern = logs.Flag("filter-pattern", "filter pattern").String()
+	logsOpt.StartTimeStr = logs.Flag("start-time", "start time").String()
+	logsOpt.EndTimeStr = logs.Flag("end-time", "end time").String()
+
 	command := kingpin.Parse()
 	if command == "version" {
 		fmt.Println("sailtrim", Version)
@@ -62,8 +69,9 @@ func _main() int {
 	case "init":
 		err = app.Init(ctx, *initServiceName)
 	case "status":
-		filter.MinLevel = logutils.LogLevel("warn")
 		err = app.Status(ctx, sailtrim.StatusOption{Detail: *statusDetail})
+	case "logs":
+		err = app.Logs(ctx, logsOpt)
 	}
 
 	if err != nil {
