@@ -5,12 +5,10 @@ A minimal deployment tool for [Amazon Lightsail Container](https://aws.amazon.co
 ## Usage
 
 ```
-sailtrim
 usage: sailtrim [<flags>] <command> [<args> ...]
 
 Flags:
-  --help                  Show context-sensitive help (also try --help-long and
-                          --help-man).
+  --help                  Show context-sensitive help (also try --help-long and --help-man).
   --log-level=info        log level (trace, debug, info, warn, error)
   --config="config.yaml"  configuration file path
 
@@ -27,8 +25,14 @@ Commands:
   update
     update container service
 
-  dump --name=NAME
-     dump container service attributest to files
+  status [<flags>]
+    show container service status
+
+  init --service-name=SERVICE-NAME
+    initialize a container service
+
+  logs [<flags>]
+    show logs
 ```
 
 ## Configuration
