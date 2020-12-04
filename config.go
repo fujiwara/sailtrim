@@ -47,6 +47,8 @@ func (c *Config) dumpService(sv *lightsail.ContainerService) error {
 		ContainerServiceName: sv.ContainerServiceName,
 		Power:                sv.Power,
 		Scale:                sv.Scale,
+		PublicDomainNames:    sv.PublicDomainNames,
+		IsDisabled:           sv.IsDisabled,
 	})
 	if err != nil {
 		return err
