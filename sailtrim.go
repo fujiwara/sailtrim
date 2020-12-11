@@ -85,7 +85,8 @@ func (s *SailTrim) Deploy(ctx context.Context) error {
 	}); err != nil {
 		return errors.Wrap(err, "failed to create deployment")
 	} else {
-		log.Printf("[info] create deployment: %s", out.String())
+		log.Printf("[info] new deployment is created")
+		log.Printf("[debug] %s", MarshalJSONString(out))
 	}
 	return nil
 }
@@ -176,15 +177,13 @@ func (s *SailTrim) initConfigurations(ctx context.Context, serviceName string) e
 				endpointsAdded = true
 			}
 		}
-		if prompter.YN("Add container entry?", false) {
-			continue
-		} else {
-			dp.Containers[containerName] = &c
+		dp.Containers[containerName] = &c
+		if !prompter.YN("Add an another container entry?", false) {
 			break
 		}
 	}
 	endpoint := prompter.Choose("Public endpoint container", endpoints, endpoints[0])
-	if endpoint != endpoints[0] {
+	if endpoint != endpoints[0] && dp.Containers[endpoint] != nil {
 		ports := []string{}
 		for p := range dp.Containers[endpoint].Ports {
 			port := p
@@ -343,14 +342,24 @@ func (s *SailTrim) Logs(ctx context.Context, opt LogsOption) error {
 	}
 	sv := out.ContainerServices[0]
 	log.Println("[debug]", sv.GoString())
-	containerNames := make([]string, 0)
+	containerNamesMap := make(map[string]struct{}, 0)
 	if n := opt.ContainerName; n != nil && *n != "" {
-		containerNames = append(containerNames, *opt.ContainerName)
+		containerNamesMap[*opt.ContainerName] = struct{}{}
 	} else {
-		for name := range sv.CurrentDeployment.Containers {
-			name := name
-			containerNames = append(containerNames, name)
+		for _, deployment := range []*lightsail.ContainerServiceDeployment{sv.CurrentDeployment, sv.NextDeployment} {
+			if deployment == nil {
+				continue
+			}
+			for name := range deployment.Containers {
+				name := name
+				containerNamesMap[name] = struct{}{}
+			}
 		}
+	}
+	containerNames := make([]string, 0, len(containerNamesMap))
+	for name := range containerNamesMap {
+		name := name
+		containerNames = append(containerNames, name)
 	}
 	sort.Strings(containerNames)
 	startTime, err := parseTime(opt.StartTimeStr)
@@ -362,6 +371,7 @@ func (s *SailTrim) Logs(ctx context.Context, opt LogsOption) error {
 		return errors.Wrap(err, "invalid --end-time")
 	}
 
+	var logEvents []string
 	for _, containerName := range containerNames {
 		in := &lightsail.GetContainerLogInput{
 			ServiceName:   sv.ContainerServiceName,
@@ -377,18 +387,24 @@ func (s *SailTrim) Logs(ctx context.Context, opt LogsOption) error {
 				return err
 			}
 			for _, ev := range out.LogEvents {
-				fmt.Printf(
-					"%s\t[%s]\t%s\n",
+				logEvents = append(logEvents, fmt.Sprintf(
+					"%s\t[%s]\t%s",
 					ev.CreatedAt.In(time.Local).Format(time.RFC3339),
 					containerName,
 					*ev.Message,
-				)
+				))
 			}
 			if out.NextPageToken == nil {
 				break
 			}
 			in.PageToken = out.NextPageToken
 		}
+	}
+	sort.SliceStable(logEvents, func(i, j int) bool {
+		return logEvents[i] < logEvents[j]
+	})
+	for _, ev := range logEvents {
+		fmt.Println(ev)
 	}
 
 	return nil

@@ -60,7 +60,7 @@ func _main() int {
 		return 1
 	}
 
-	log.Println("[info] sailtrim", Version)
+	log.Println("[debug] sailtrim", Version)
 	switch command {
 	case "deploy":
 		err = app.Deploy(ctx)
@@ -78,6 +78,6 @@ func _main() int {
 		log.Println("[error]", err)
 		return 1
 	}
-	log.Println("[info] completed")
+	log.Println("[debug] completed")
 	return 0
 }
