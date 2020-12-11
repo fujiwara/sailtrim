@@ -14,7 +14,7 @@ import (
 )
 
 // Version number
-var Version = "current"
+var version = "current"
 
 func main() {
 	os.Exit(_main())
@@ -45,7 +45,7 @@ func _main() int {
 
 	command := kingpin.Parse()
 	if command == "version" {
-		fmt.Println("sailtrim", Version)
+		fmt.Println("sailtrim", version)
 		return 0
 	}
 
@@ -65,7 +65,7 @@ func _main() int {
 		return 1
 	}
 
-	log.Println("[debug] sailtrim", Version)
+	log.Println("[debug] sailtrim", version)
 	switch command {
 	case "deploy":
 		err = app.Deploy(ctx)
