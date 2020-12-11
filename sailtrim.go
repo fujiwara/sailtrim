@@ -127,7 +127,6 @@ func (s *SailTrim) Init(ctx context.Context, serviceName string) error {
 var (
 	scaleChoices = []string{"1", "2", "3", "4"}
 	scaleDefault = "1"
-	powerChoices = []string{"nano", "micro", "small", "medium", "large", "xlarge"}
 	powerDefault = "micro"
 )
 
@@ -135,6 +134,18 @@ func (s *SailTrim) initConfigurations(ctx context.Context, serviceName string) e
 	sv := lightsail.ContainerService{
 		ContainerServiceName: aws.String(serviceName),
 	}
+	powerChoices := make([]string, 0)
+	out, err := s.svc.GetContainerServicePowersWithContext(ctx, &lightsail.GetContainerServicePowersInput{})
+	if err != nil {
+		return err
+	}
+	log.Println("[debug]", out.String())
+	for _, pw := range out.Powers {
+		if aws.BoolValue(pw.IsActive) {
+			powerChoices = append(powerChoices, *pw.Name)
+		}
+	}
+
 	sv.Power = aws.String(
 		prompter.Choose("Choose the power", powerChoices, powerDefault),
 	)

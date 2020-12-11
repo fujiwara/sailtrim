@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/alecthomas/kingpin"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/fujiwara/sailtrim"
 	"github.com/hashicorp/logutils"
@@ -25,6 +26,7 @@ func _main() int {
 	kingpin.Command("version", "show version")
 	logLevel := kingpin.Flag("log-level", "log level (trace, debug, info, warn, error)").Default("info").Enum("trace", "debug", "info", "warn", "error")
 	configPath := kingpin.Flag("config", "configuration file path").Default("config.yaml").String()
+	debug := kingpin.Flag("debug", "set --log-level to debug").Bool()
 
 	kingpin.Command("deploy", "create new deployment")
 	kingpin.Command("update", "update container service")
@@ -47,6 +49,9 @@ func _main() int {
 		return 0
 	}
 
+	if *debug {
+		logLevel = aws.String("debug")
+	}
 	filter := &logutils.LevelFilter{
 		Levels:   []logutils.LogLevel{"trace", "debug", "info", "warn", "error"},
 		MinLevel: logutils.LogLevel(*logLevel),
