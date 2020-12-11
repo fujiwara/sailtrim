@@ -3,3 +3,9 @@ sailtrim: cmd/*/* *.go go.*
 
 test:
 	go test -race ./...
+
+install: sailtrim
+	install sailtrim ~/bin
+
+snapshot:
+	goreleaser build --snapshot --rm-dist
